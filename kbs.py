@@ -21,4 +21,13 @@ def get_keyboard() -> ReplyKeyboardMarkup:
     keyboard.add(KeyboardButton(text="Upload a story"))
     keyboard.add(KeyboardButton(text="Read a story"))
     return keyboard.as_markup(resize_keyboard=True)
-   
+
+
+#admin commands
+def keyboardadm() -> ReplyKeyboardMarkup:
+    keyboard = ReplyKeyboardBuilder()
+    keyboard.add(KeyboardButton(text="Users"))
+    keyboard.add(KeyboardButton(text="Stories"))
+    return keyboard.as_markup(resize_keyboard=True)
+
+
