@@ -14,7 +14,7 @@ from funcs import *
 import random
 
 # Bot token
-TOKEN = ""
+TOKEN = "7846714351:AAHl_8w_Ek_ll41nwh2y0EbwNrnIOLJmkCk"
 
 # Initialize dispatcher and router
 dp = Dispatcher()
