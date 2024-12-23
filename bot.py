@@ -15,9 +15,8 @@ from funcs import contains_bad_words, load_bad_words
 import random
 
 # Bot token
-TOKEN = os.environ.get("BOT_TOKEN")  # Use environment variable for security
-if not TOKEN:
-    raise ValueError("BOT_TOKEN environment variable not set.")
+TOKEN = "7846714351:AAHl_8w_Ek_ll41nwh2y0EbwNrnIOLJmkCk"  # Use environment variable for security
+
 
 # Initialize dispatcher and router
 dp = Dispatcher()
