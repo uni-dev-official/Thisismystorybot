@@ -2,7 +2,9 @@ import asyncio
 import logging
 import os
 import sys
+import threading
 
+from aiohttp import web
 from aiogram.filters.command import Command
 from aiogram import Bot, Dispatcher, Router, html
 from aiogram.client.default import DefaultBotProperties
@@ -11,8 +13,6 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from datetime import datetime
 from aiogram.types import Message, ReplyKeyboardRemove
-from threading import Thread
-from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 from db import add_user, fetch_all_stories, add_story
 from kbs import get_keyboard
@@ -45,38 +45,18 @@ async def command_start_handler(message: Message) -> None:
         reply_markup=keyboard,
     )
 
-# Story handlers (same as your original code, truncated here for brevity)
-# Admin command handler
-@dp.message(Command('admin'))
-async def admin_p(message: Message):
-    admkeyboard = keyboardadm()
-    if message.from_user.id == 6906726023:
-        await message.answer("Welcome Admin!", reply_markup=admkeyboard)
-    else:
-        await message.answer("You found the easter egg, congratulations!")
-
-# Start reading story handler
+# Handlers for other commands (Read a story, Upload a story, etc.)
 @router.message(lambda msg: msg.text == "Read a story")
 async def start_read_story(message: Message):
     user_id = message.chat.id
-    # Fetch all stories from the database
     stories = fetch_all_stories()
-
-    # Ensure we have a set of stories sent to the user
     if user_id not in user_sent_stories:
-        user_sent_stories[user_id] = set()  # Initialize if not present
-
-    # Filter out stories that have already been sent to the user
+        user_sent_stories[user_id] = set()
     available_stories = [story for story in stories if story[0] not in user_sent_stories[user_id]]
-
     if available_stories:
-        # Choose a random story from the list
         story = random.choice(available_stories)
-        story_content = story[2]
-        # Mark this story as sent for the user
         user_sent_stories[user_id].add(story[0])
-        # Send the story content to the user
-        await message.answer(f"Here is a story:\n\n{story_content}")
+        await message.answer(f"Here is a story:\n\n{story[2]}")
     else:
         await message.answer("No more new stories to read!")
 
@@ -108,35 +88,31 @@ async def story_uploaded_success(message: Message):
     add_story(chat_id=chat_id, story=message.text)
     await message.answer("Your story has been successfully uploaded!", reply_markup=keyboard)
 
-# HTTP server to bind to a port
-def start_http_server():
-    class Handler(SimpleHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(b"Bot is running!")
+# HTTP Keep-Alive Server
+async def handle(request):
+    return web.Response(text="Bot is alive!")
 
-    port = int(os.environ.get("PORT", 5000))  # Default to 5000 if PORT is not set
-    server = HTTPServer(("0.0.0.0", port), Handler)
-    logging.info(f"Starting HTTP server on port {port}")
-    server.serve_forever()
+def start_web_server():
+    app = web.Application()
+    app.add_routes([web.get('/', handle)])
+    port = int(os.getenv('PORT', 8000))  # Use the PORT environment variable
+    logging.info(f"Starting web server on port {port}")
+    web.run_app(app, port=port)
 
-# Combined main function
-async def main() -> None:
+# Main function to run the bot
+async def main():
     logging.info("Starting bot...")
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp.include_router(router)  # Attach the router to the dispatcher
 
-    # Start the HTTP server in a separate thread
-    http_thread = Thread(target=start_http_server, daemon=True)
-    http_thread.start()
+    # Start the web server in a separate thread
+    threading.Thread(target=start_web_server, daemon=True).start()
 
     # Start polling
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    
-    # Run the bot and HTTP server
+
+    # Run the bot
     asyncio.run(main())
