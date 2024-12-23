@@ -2,6 +2,8 @@ import asyncio
 import logging
 import os
 import sys
+
+from aiogram.filters.command import Command
 from aiogram import Bot, Dispatcher, Router, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
