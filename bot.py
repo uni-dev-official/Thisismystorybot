@@ -51,7 +51,7 @@ async def command_start_handler(message: Message) -> None:
 async def admin_p(message: Message):
     admkeyboard = keyboardadm()
     if message.from_user.id == 6906726023:
-        await message.answer("Welcome Admin!",reply_markup=admkeyboard)
+        await message.answer("Welcome Admin!", reply_markup=admkeyboard)
     else:
         await message.answer("You found the easter egg, congratulations!")
 
@@ -108,14 +108,6 @@ async def story_uploaded_success(message: Message):
     add_story(chat_id=chat_id, story=message.text)
     await message.answer("Your story has been successfully uploaded!", reply_markup=keyboard)
 
-# Main function
-async def main() -> None:
-    logging.info("Starting bot...")
-    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp.include_router(router)  # Attach the router to the dispatcher
-    await dp.start_polling(bot)
-# ...
-
 # HTTP server to bind to a port
 def start_http_server():
     class Handler(SimpleHTTPRequestHandler):
@@ -130,19 +122,21 @@ def start_http_server():
     logging.info(f"Starting HTTP server on port {port}")
     server.serve_forever()
 
-# Main function
+# Combined main function
 async def main() -> None:
     logging.info("Starting bot...")
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp.include_router(router)
+    dp.include_router(router)  # Attach the router to the dispatcher
+
+    # Start the HTTP server in a separate thread
+    http_thread = Thread(target=start_http_server, daemon=True)
+    http_thread.start()
+
+    # Start polling
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     
-    # Start the HTTP server in a separate thread
-    http_thread = Thread(target=start_http_server, daemon=True)
-    http_thread.start()
-
-    # Run the bot
+    # Run the bot and HTTP server
     asyncio.run(main())
