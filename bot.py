@@ -1,12 +1,11 @@
 import asyncio
 import logging
+import os  # For accessing the environment variables
 import sys
-
-
 from aiogram.filters.command import Command
 from aiogram import Bot, Dispatcher, Router, html
 from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode # type: ignore
+from aiogram.enums import ParseMode  # type: ignore
 from aiogram.filters import CommandStart
 from aiogram.types import Message, ReplyKeyboardRemove
 from datetime import datetime
@@ -16,7 +15,9 @@ from funcs import contains_bad_words, load_bad_words
 import random
 
 # Bot token
-TOKEN = "7846714351:AAHl_8w_Ek_ll41nwh2y0EbwNrnIOLJmkCk"
+TOKEN = os.environ.get("BOT_TOKEN")  # Use environment variable for security
+if not TOKEN:
+    raise ValueError("BOT_TOKEN environment variable not set.")
 
 # Initialize dispatcher and router
 dp = Dispatcher()
@@ -47,7 +48,7 @@ async def command_start_handler(message: Message) -> None:
 async def admin_p(message: Message):
     admkeyboard = keyboardadm()
     if message.from_user.id == 6906726023:
-        await message.answer("Welcome Admin!",reply_markup=admkeyboard)
+        await message.answer("Welcome Admin!", reply_markup=admkeyboard)
     else:
         await message.answer("You found the easter egg, congratulations!")
 
@@ -109,6 +110,12 @@ async def main() -> None:
     logging.info("Starting bot...")
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp.include_router(router)  # Attach the router to the dispatcher
+
+    # Simulate binding to a port for Render
+    port = int(os.environ.get("PORT", 5000))  # Default to 5000 if PORT is not set
+    logging.info(f"Binding to port {port}")  # Log for Render's port detection
+
+    # Start the bot polling
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
