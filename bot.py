@@ -3,6 +3,8 @@ import logging
 import os
 import sys
 import threading
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 from aiohttp import web
 from aiogram.filters.command import Command
@@ -23,12 +25,18 @@ import random
 TOKEN = "7846714351:AAE83l5lAp-rfSWx0tNL1q5_kXJiD694wnk"
 
 # Initialize dispatcher and router
+app = FastAPI()
 dp = Dispatcher()
 router = Router()
 
 # A dictionary to track sent stories per user
 user_sent_stories = {}
-
+@app.get("/download-db")
+async def download_db():
+    db_path = "bot_database.db"  # Replace with your actual DB path
+    if os.path.exists(db_path):
+        return FileResponse(db_path, filename="database.sqlite3")
+    return {"error": "Database file not found"}
 # Start command handler
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
