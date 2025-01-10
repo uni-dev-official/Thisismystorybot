@@ -136,7 +136,7 @@ async def handle(request):
 def start_web_server():
     port = int(os.getenv('PORT', 10000))  # Use the PORT environment variable
     logging.info(f"Starting web server on port {port}")
-    web.run_app(app, port=port)
+ 
 
 # Main function to run the bot
 async def main():
