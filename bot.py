@@ -5,7 +5,6 @@ import sys
 import threading
 from datetime import datetime
 
-from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
 from aiohttp import web
@@ -24,7 +23,7 @@ import random
 TOKEN = "7846714351:AAE83l5lAp-rfSWx0tNL1q5_kXJiD694wnk"
 
 # Initialize FastAPI and Aiogram components
-app = FastAPI()
+
 dp = Dispatcher()
 router = Router()
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -140,8 +139,6 @@ async def handle(request):
     return web.Response(text="Bot is alive!")
 
 def start_web_server():
-    app = web.Application()
-    app.add_routes([web.get('/', handle)])
     port = int(os.getenv('PORT', 10000))  # Use the PORT environment variable
     logging.info(f"Starting web server on port {port}")
     web.run_app(app, port=port)
