@@ -142,7 +142,7 @@ async def handle(request):
 def start_web_server():
     app = web.Application()
     app.add_routes([web.get('/', handle)])
-    port = int(os.getenv('PORT', 8000))  # Use the PORT environment variable
+    port = int(os.getenv('PORT', 10000))  # Use the PORT environment variable
     logging.info(f"Starting web server on port {port}")
     web.run_app(app, port=port)
 
