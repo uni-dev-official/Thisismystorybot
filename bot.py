@@ -38,7 +38,7 @@ async def download_db():
     if os.path.exists(db_path):
         return FileResponse(db_path, filename="database.sqlite3")
     return {"error": "Database file not found"}
-@router.message(Command("admin"))
+@router.message(Command("premium"))
 async def admin_panel(message: Message):
     await bot.send_invoice(
         chat_id=message.chat.id,
