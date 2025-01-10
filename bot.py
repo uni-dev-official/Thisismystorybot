@@ -11,7 +11,7 @@ from aiogram.filters.command import Command
 from aiogram import Bot, Dispatcher, Router, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 from datetime import datetime
 from aiogram.types import Message, ReplyKeyboardRemove
@@ -28,6 +28,7 @@ TOKEN = "7846714351:AAE83l5lAp-rfSWx0tNL1q5_kXJiD694wnk"
 app = FastAPI()
 dp = Dispatcher()
 router = Router()
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 # A dictionary to track sent stories per user
 user_sent_stories = {}
@@ -37,7 +38,39 @@ async def download_db():
     if os.path.exists(db_path):
         return FileResponse(db_path, filename="database.sqlite3")
     return {"error": "Database file not found"}
+@router.message(Command("admin"))
+async def admin_panel(message: Message):
+    await bot.send_invoice(
+        chat_id=message.chat.id,
+        title="Bir oylik Premium Obuna",
+        description="Premium funksiyalardan foydalanish uchun 1 oylik obuna.",
+        payload="subscription_monthly",
+        provider_token="398062629:TEST:999999999_F91D8F69C042267444B74CC0B3C747757EB0E065",
+        currency="UZS",
+        prices=prices,
+        start_parameter="buy_monthly_subscription"
+    )
+   
+
+@router.pre_checkout_query()
+async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)  # Approve the pre-checkout query
+
+@router.message(F.successful_payment)
+async def successful_payment(message: types.Message):
+    logging.info(f"Successful payment data: {message.successful_payment}")
+    try:
+        if message.successful_payment.invoice_payload == "subscription_monthly":
+            add_subscription(chat_id=message.chat.id, duration_in_days=30)
+            await message.answer("Obuna bo'lganingiz uchun tashakkur! Sizning premium funksiayalaringiz endi faol. Funksiyalar suhbatdoshni qidirishingizda faollashadi.")
+            await message.anwer("🎉")
+    except Exception as e:
+        logging.error(f"Error processing successful payment: {e}")
+        await message.answer("To'lovni qayta ishlashda xatolik yuz berdi. Iltimos, yana bir bor urinib ko'ring.")
+        await message.answer("To'lovni qayta ishlashda xatolik yuz berdi. Iltimos, yana bir bor urinib ko'ring.")
+
 # Start command handler
+
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     chat_id = message.chat.id
