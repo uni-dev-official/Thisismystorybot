@@ -5,7 +5,7 @@ import sys
 import threading
 from datetime import datetime
 
-from fastapi.responses import FileResponse
+
 
 from aiohttp import web
 from aiogram import Bot, Dispatcher, Router, html, types
