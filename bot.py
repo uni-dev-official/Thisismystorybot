@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 from aiohttp import web
-from aiogram import Bot, Dispatcher, Router, html, types
+from aiogram import Bot, Dispatcher, Router, html, types, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
@@ -52,7 +52,7 @@ async def admin_panel(message: Message):
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
-@router.message(types.SuccessfulPayment)
+@router.message(F.successful_payment)
 async def successful_payment(message: SuccessfulPayment):
     logging.info(f"Successful payment data: {message.successful_payment}")
     try:
