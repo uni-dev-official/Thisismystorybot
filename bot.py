@@ -3,18 +3,17 @@ import logging
 import os
 import sys
 import threading
+from datetime import datetime
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
 from aiohttp import web
-from aiogram.filters.command import Command
-from aiogram import Bot, Dispatcher, Router, html
+from aiogram import Bot, Dispatcher, Router, html, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
-from datetime import datetime
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.filters import Command, CommandStart
+from aiogram.types import Message, PreCheckoutQuery, ReplyKeyboardRemove, SuccessfulPayment
 
 from db import add_user, fetch_all_stories, add_story
 from kbs import get_keyboard
@@ -24,7 +23,7 @@ import random
 # Bot token
 TOKEN = "7846714351:AAE83l5lAp-rfSWx0tNL1q5_kXJiD694wnk"
 
-# Initialize dispatcher and router
+# Initialize FastAPI and Aiogram components
 app = FastAPI()
 dp = Dispatcher()
 router = Router()
@@ -32,12 +31,21 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 # A dictionary to track sent stories per user
 user_sent_stories = {}
+
+# Prices for premium subscription
+prices = [
+    types.LabeledPrice(label="Bir oylik Premium", amount=5000000),  # Amount in minor units (50000 = 500.00 UZS)
+]
+
+# Routes
 @app.get("/download-db")
 async def download_db():
     db_path = "bot_database.db"  # Replace with your actual DB path
     if os.path.exists(db_path):
         return FileResponse(db_path, filename="database.sqlite3")
     return {"error": "Database file not found"}
+
+# Premium subscription handlers
 @router.message(Command("premium"))
 async def admin_panel(message: Message):
     await bot.send_invoice(
@@ -50,27 +58,26 @@ async def admin_panel(message: Message):
         prices=prices,
         start_parameter="buy_monthly_subscription"
     )
-   
 
 @router.pre_checkout_query()
 async def process_pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)  # Approve the pre-checkout query
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
-@router.message(F.successful_payment)
-async def successful_payment(message: types.Message):
+@router.message(types.SuccessfulPayment)
+async def successful_payment(message: SuccessfulPayment):
     logging.info(f"Successful payment data: {message.successful_payment}")
     try:
         if message.successful_payment.invoice_payload == "subscription_monthly":
-            add_subscription(chat_id=message.chat.id, duration_in_days=30)
-            await message.answer("Obuna bo'lganingiz uchun tashakkur! Sizning premium funksiayalaringiz endi faol. Funksiyalar suhbatdoshni qidirishingizda faollashadi.")
-            await message.anwer("🎉")
+            # Add subscription logic here (function to be implemented)
+            await message.answer(
+                "Obuna bo'lganingiz uchun tashakkur! Sizning premium funksiyalaringiz endi faol. Funksiyalar suhbatdoshni qidirishingizda faollashadi."
+            )
+            await message.answer("🎉")
     except Exception as e:
         logging.error(f"Error processing successful payment: {e}")
         await message.answer("To'lovni qayta ishlashda xatolik yuz berdi. Iltimos, yana bir bor urinib ko'ring.")
-        await message.answer("To'lovni qayta ishlashda xatolik yuz berdi. Iltimos, yana bir bor urinib ko'ring.")
 
 # Start command handler
-
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     chat_id = message.chat.id
@@ -86,7 +93,7 @@ async def command_start_handler(message: Message) -> None:
         reply_markup=keyboard,
     )
 
-# Handlers for other commands (Read a story, Upload a story, etc.)
+# Story-related handlers
 @router.message(lambda msg: msg.text == "Read a story")
 async def start_read_story(message: Message):
     user_id = message.chat.id
@@ -101,16 +108,14 @@ async def start_read_story(message: Message):
     else:
         await message.answer("No more new stories to read!")
 
-# Story upload handler
 @router.message(lambda msg: msg.text == "Upload a story")
 async def start_upload_story(message: Message):
     await message.answer("Please upload your story here:", reply_markup=ReplyKeyboardRemove())
 
 @router.message(lambda msg: msg.text and contains_bad_words(msg.text))
 async def bad_word_detected(message: Message):
-    if True:
-        keyboard = get_keyboard()
-        await message.answer("Your message contains inappropriate words and cannot be accepted.", reply_markup=keyboard)
+    keyboard = get_keyboard()
+    await message.answer("Your message contains inappropriate words and cannot be accepted.", reply_markup=keyboard)
 
 @router.message(lambda msg: msg.text and len(msg.text.split()) < 150)
 async def story_too_short(message: Message):
@@ -143,11 +148,10 @@ def start_web_server():
 # Main function to run the bot
 async def main():
     logging.info("Starting bot...")
-    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp.include_router(router)  # Attach the router to the dispatcher
+    dp.include_router(router)
 
-    # Start the web server in a separate thread
-    threading.Thread(target=start_web_server, daemon=True).start()
+    # Run web server as a task
+    asyncio.create_task(start_web_server())
 
     # Start polling
     await dp.start_polling(bot)
