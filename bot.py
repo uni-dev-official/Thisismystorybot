@@ -133,10 +133,21 @@ async def story_uploaded_success(message: Message):
 async def handle(request):
     return web.Response(text="Bot is alive!")
 
-def start_web_server():
+async def start_web_server():
+    # Create an aiohttp web application
+    app = web.Application()
+    app.router.add_get("/", handle)  # Add a route for the root path
+
     port = int(os.getenv('PORT', 10000))  # Use the PORT environment variable
     logging.info(f"Starting web server on port {port}")
- 
+
+    # Run the web server
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="0.0.0.0", port=port)
+    await site.start()
+
+    logging.info("Web server is running.")
 
 # Main function to run the bot
 async def main():
