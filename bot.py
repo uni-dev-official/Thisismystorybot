@@ -36,16 +36,6 @@ user_sent_stories = {}
 prices = [
     types.LabeledPrice(label="Bir oylik Premium", amount=5000000),  # Amount in minor units (50000 = 500.00 UZS)
 ]
-
-# Routes
-@app.get("/download-db")
-async def download_db():
-    db_path = "bot_database.db"  # Replace with your actual DB path
-    if os.path.exists(db_path):
-        return FileResponse(db_path, filename="database.sqlite3")
-    return {"error": "Database file not found"}
-
-# Premium subscription handlers
 @router.message(Command("premium"))
 async def admin_panel(message: Message):
     await bot.send_invoice(
@@ -76,6 +66,17 @@ async def successful_payment(message: SuccessfulPayment):
     except Exception as e:
         logging.error(f"Error processing successful payment: {e}")
         await message.answer("To'lovni qayta ishlashda xatolik yuz berdi. Iltimos, yana bir bor urinib ko'ring.")
+
+# Routes
+@app.get("/download-db")
+async def download_db():
+    db_path = "bot_database.db"  # Replace with your actual DB path
+    if os.path.exists(db_path):
+        return FileResponse(db_path, filename="database.sqlite3")
+    return {"error": "Database file not found"}
+
+# Premium subscription handlers
+
 
 # Start command handler
 @router.message(CommandStart())
