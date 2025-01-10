@@ -67,12 +67,7 @@ async def successful_payment(message: SuccessfulPayment):
         await message.answer("To'lovni qayta ishlashda xatolik yuz berdi. Iltimos, yana bir bor urinib ko'ring.")
 
 # Routes
-@app.get("/download-db")
-async def download_db():
-    db_path = "bot_database.db"  # Replace with your actual DB path
-    if os.path.exists(db_path):
-        return FileResponse(db_path, filename="database.sqlite3")
-    return {"error": "Database file not found"}
+
 
 # Premium subscription handlers
 
